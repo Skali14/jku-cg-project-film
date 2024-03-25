@@ -11,13 +11,16 @@ This `README.md` needs to be pushed to Github for each of the four assignments. 
 
 |                  | Student ID | First Name | Last Name | E-Mail |
 | ---------------- | ---------- | ---------- | --------- | ------ |
-| **Student name** | TODO       | TODO       | TODO      | TODO   |
+| **Student name** | k12222898  |   Simon    |  Kadlec   | simon.kadlec@outlook.de |
 
 ### Concept Submission due on 25.03.2024
 
-TODO
-
-(Explain the basic story of your movie, i.e., planned scenes, what happens, which objects are used, etc.)
+I'm planning to create a movie featuring a scene where a robotic arm assembles various components on an assembly table.
+There will be a cupboard or a table, where multiple of the required items are stored. The robotic arm will retrieve the items from there
+and put them onto the assembly table. In a different scene there will be a closeup of the assembling table, where the robotic arm will be shown, 
+welding some items together. This process will likely be represented by red particles erupting from the items. In the third scene, the robotic arm
+will take the welded items and put them onto a conveyor belt, where they will be transported away. The robotic arm has a light source attached, 
+which will serve as the moving light source in the movie. The background will be set in an industrial-looking room.
 
 ## Assignment 1 - Scene Graphs (Submission due on 15.04.2024)
 
