@@ -29,7 +29,7 @@ function initAnimations() {
                 translate: [0, 0, 0],
                 rotateY: 180,
                 scale: 0.30
-            })), glm.translate(0, 0, 0)), duration: 2500
+            })), glm.translate(0, 0, 0)), duration: 2250
         }
         ], false);
 
@@ -46,7 +46,7 @@ function initAnimations() {
                 translate: [0, 0, 0],
                 rotateY: 180,
                 scale: 0.30
-            }), glm.deg2rad(progress * -75)), duration: 2500
+            }), glm.deg2rad(progress * -75)), duration: 2250
         }], false);
 
     //lowering front arm of robot to put rbPi back down
@@ -62,7 +62,7 @@ function initAnimations() {
                 translate: [0, 0, 0],
                 rotateY: 180,
                 scale: 0.30
-            }), glm.rotateY(-75)), glm.deg2rad(progress * -30)), duration: 1000
+            }), glm.rotateY(-75)), glm.deg2rad(progress * -30)), duration: 900
         }], false);
 
     //lowering front arm of robot to pick up arduino
@@ -78,7 +78,7 @@ function initAnimations() {
                 translate: [0, 0, 0],
                 rotateY: 180,
                 scale: 0.30
-            }), glm.rotateY(-105)), glm.deg2rad(progress * -75)), duration: 2500
+            }), glm.rotateY(-105)), glm.deg2rad(progress * -75)), duration: 2250
         }], false);
 
     //lowering front arm of robot to put arduino back down
@@ -108,7 +108,7 @@ function initAnimations() {
         return new Animation(arm4RotationTransformation,
             [{
                 matrix: progress => mat4.rotateZ(mat4.create(), glm.translate(arm4Pos[0], arm4Pos[1], arm4Pos[2]), glm.deg2rad(progress * -15.5)),
-                duration: 1250
+                duration: 1200
             }],
             false);
     }
@@ -118,7 +118,7 @@ function initAnimations() {
         return new Animation(arm4RotationTransformation,
             [{
                 matrix: progress => mat4.rotateZ(mat4.create(), mat4.rotateZ(mat4.create(), glm.translate(arm4Pos[0], arm4Pos[1], arm4Pos[2]), glm.deg2rad(-15.5)), glm.deg2rad(progress * 15.5)),
-                duration: 1250
+                duration: 1200
             }],
             false);
     }

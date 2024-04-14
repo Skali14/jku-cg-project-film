@@ -70,7 +70,7 @@ function init(resources) {
     //setup camera
     cameraStartPos = vec3.fromValues(0, 2, -11);
     camera = new UserControlledCamera(gl.canvas, cameraStartPos);
-    //setup an animation for the camera, moving it into position
+    //set up an animation for the camera, moving it into position
     cameraAnimation = new Animation(camera,
         [{matrix: mat4.translate(mat4.create(), mat4.create(), vec3.fromValues(0, 1, -10)), duration: 5000}],
         false);
