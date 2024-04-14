@@ -15,33 +15,13 @@ var root = null;
 // time in last render step
 var previousTime = 0;
 
-let arm1RotationTransformation;
-let arm2RotationTransformation;
-let arm3RotationTransformation;
+let totalArmTransformNode;
 let arm4RotationTransformation;
-let arm5RotationTransformation;
-let arm6RotationTransformation;
-let arm7RotationTransformation;
 let gripperRotationTransformation;
-let arm4PickUpAnimation1;
-let arm4PickUpAnimation2;
-let arm4PickUpAnimation3;
-let moveRobotToScene;
+let arduinoTransformation;
 let rbPiTransformation;
-let arm4PutDownAnimation1;
-let arm4PutDownAnimation2;
-let arm4PutDownAnimation3;
-let arm7;
 let gripper;
 let rbPi;
-let putDownRbPi;
-
-let totalArmRotationAnimation1;
-let totalArmRotationAnimation2;
-
-let armScaleTransformNode;
-
-var animatedAngle = 0;
 
 let arm1Pos = vec3.fromValues(-0.010286, 5.52644, 0);
 let arm2Pos = vec3.fromValues(-3.42716, 5.5264, 0);
@@ -58,7 +38,6 @@ loadResources({
     fs: './src/shader/phong.fs.glsl',
     vs_single: './src/shader/single.vs.glsl',
     fs_single: './src/shader/single.fs.glsl',
-    c3po: './src/models/C-3PO.obj',
     base: './src/models/Base.obj',
     arm1: './src/models/Arm1.obj',
     arm2: './src/models/Arm2.obj',
@@ -72,7 +51,9 @@ loadResources({
     rb_pi: './src/models/rb_pi.obj',
     arduino: './src/models/arduino.obj',
     conveyor: './src/models/conveyor.obj',
-    box: './src/models/box.obj'
+    box: './src/models/box.obj',
+    circuit_board: './src/models/circuit_board.obj',
+    rail: './src/models/rail.obj',
 }).then(function (resources /*an object containing our keys with the loaded resources*/) {
     init(resources);
 
@@ -87,14 +68,13 @@ function init(resources) {
     gl = createContext();
 
     //setup camera
-    cameraStartPos = vec3.fromValues(0, 3, -10);
+    cameraStartPos = vec3.fromValues(0, 2, -11);
     camera = new UserControlledCamera(gl.canvas, cameraStartPos);
     //setup an animation for the camera, moving it into position
     cameraAnimation = new Animation(camera,
         [{matrix: mat4.translate(mat4.create(), mat4.create(), vec3.fromValues(0, 1, -10)), duration: 5000}],
         false);
     cameraAnimation.start()
-    //TODO create your own scenegraph
     root = createSceneGraph(gl, resources);
 }
 
@@ -134,89 +114,109 @@ function createSceneGraph(gl, resources) {
         floor
     ]));
 
-    //robotic arm scaling node
-    armScaleTransformNode = new TransformationSGNode(glm.transform({
+    
+    
+    //whole robotic arm transformation node
+    totalArmTransformNode = new TransformationSGNode(glm.transform({
         translate: [0, 0, 4.5],
         rotateY: 180,
         scale: 0.30
     }));
-    root.append(armScaleTransformNode);
+    root.append(totalArmTransformNode);
 
+    
+    
     //create base
     let base = new MaterialSGNode([
         new RenderSGNode(resources.base)
     ]);
-    armScaleTransformNode.append(base);
+    totalArmTransformNode.append(new TransformationSGNode(mat4.create(),[base]));
 
-    arm1RotationTransformation = new TransformationSGNode(glm.translate(arm1Pos[0], arm1Pos[1], arm1Pos[2]));
+    
 
     //create arm1
     let arm1 = new MaterialSGNode([
         new RenderSGNode(resources.arm1)
     ]);
-    armScaleTransformNode.append(arm1RotationTransformation);
-    arm1RotationTransformation.append(arm1);
+    
+    //add arm1 to scene graph
+    totalArmTransformNode.append(new TransformationSGNode(glm.translate(arm1Pos[0], arm1Pos[1], arm1Pos[2]), [arm1]));
 
-    arm2RotationTransformation = new TransformationSGNode(glm.translate(arm2Pos[0], arm2Pos[1], arm2Pos[2]));
+    
 
     //create arm2
     let arm2 = new MaterialSGNode([
         new RenderSGNode(resources.arm2)
     ]);
-    armScaleTransformNode.append(arm2RotationTransformation);
-    arm2RotationTransformation.append(arm2);
+    
+    //add arm2 to scene graph
+    totalArmTransformNode.append(new TransformationSGNode(glm.translate(arm2Pos[0], arm2Pos[1], arm2Pos[2]), [arm2]));
 
-    arm3RotationTransformation = new TransformationSGNode(glm.translate(arm3Pos[0], arm3Pos[1], arm3Pos[2]));
+    
 
     //create arm3
     let arm3 = new MaterialSGNode([
         new RenderSGNode(resources.arm3)
     ]);
-    armScaleTransformNode.append(arm3RotationTransformation);
-    arm3RotationTransformation.append(arm3);
+    
+    //add arm3 to scene graph
+    totalArmTransformNode.append(new TransformationSGNode(glm.translate(arm3Pos[0], arm3Pos[1], arm3Pos[2]), [arm3]));
 
+    
+    
+    //create transform node for arm4
     arm4RotationTransformation = new TransformationSGNode(glm.translate(arm4Pos[0], arm4Pos[1], arm4Pos[2]));
-
-
+    
     //create arm4
     let arm4 = new MaterialSGNode([
         new RenderSGNode(resources.arm4)
     ]);
-    armScaleTransformNode.append(arm4RotationTransformation);
+    
+    //add arm4 to scene graph
+    totalArmTransformNode.append(arm4RotationTransformation);
     arm4RotationTransformation.append(arm4);
 
-    let arm5MinusArm4 = vec3.subtract(vec3.create(), arm5Pos, arm4Pos);
-    arm5RotationTransformation = new TransformationSGNode(glm.translate(arm5MinusArm4[0], arm5MinusArm4[1], arm5MinusArm4[2]));
+    
 
     //create arm5
     let arm5 = new MaterialSGNode([
         new RenderSGNode(resources.arm5)
     ]);
-    arm4.append(arm5RotationTransformation);
-    arm5RotationTransformation.append(arm5);
 
-    let arm6MinusArm5 = vec3.subtract(vec3.create(), arm6Pos, arm5Pos);
-    arm6RotationTransformation = new TransformationSGNode(glm.translate(arm6MinusArm5[0], arm6MinusArm5[1], arm6MinusArm5[2]));
+    //calculate relative position for arm5
+    let arm5RelativeToArm4 = vec3.subtract(vec3.create(), arm5Pos, arm4Pos);
+    //add arm5 to scene graph
+    arm4.append(new TransformationSGNode(glm.translate(arm5RelativeToArm4[0], arm5RelativeToArm4[1], arm5RelativeToArm4[2]), [arm5]));
+
+    
 
     //create arm6
     let arm6 = new MaterialSGNode([
         new RenderSGNode(resources.arm6)
     ]);
-    arm5.append(arm6RotationTransformation);
-    arm6RotationTransformation.append(arm6);
 
-    let arm7MinusArm6 = vec3.subtract(vec3.create(), arm7Pos, arm6Pos);
-    arm7RotationTransformation = new TransformationSGNode(glm.translate(arm7MinusArm6[0], arm7MinusArm6[1], arm7MinusArm6[2]));
+    //calculate relative position for arm6
+    let arm6RelativeToArm5 = vec3.subtract(vec3.create(), arm6Pos, arm5Pos);
+    //add arm6 to scene graph
+    arm5.append(new TransformationSGNode(glm.translate(arm6RelativeToArm5[0], arm6RelativeToArm5[1], arm6RelativeToArm5[2]), [arm6]));
 
+    
+    
     //create arm7
-    arm7 = new MaterialSGNode([
+    let arm7 = new MaterialSGNode([
         new RenderSGNode(resources.arm7)
     ]);
-    arm6.append(arm7RotationTransformation);
-    arm7RotationTransformation.append(arm7);
+    
+    //calculate relative position for arm7
+    let arm7RelativeToArm6 = vec3.subtract(vec3.create(), arm7Pos, arm6Pos);
+    //add arm7 to scene graph
+    arm6.append(new TransformationSGNode(glm.translate(arm7RelativeToArm6[0], arm7RelativeToArm6[1], arm7RelativeToArm6[2]), [arm7]));
 
-    let gripperMinusArm7 = vec3.subtract(vec3.create(), gripperPos, arm7Pos);
-    gripperRotationTransformation = new TransformationSGNode(glm.translate(gripperMinusArm7[0], gripperMinusArm7[1], gripperMinusArm7[2]));
+    
+    
+    //create transform node for gripper and translate it relative to arm7
+    let gripperRelativeToArm7 = vec3.subtract(vec3.create(), gripperPos, arm7Pos);
+    gripperRotationTransformation = new TransformationSGNode(glm.translate(gripperRelativeToArm7[0], gripperRelativeToArm7[1], gripperRelativeToArm7[2]));
 
     //create gripper
     gripper = new MaterialSGNode([
@@ -225,149 +225,125 @@ function createSceneGraph(gl, resources) {
     arm7.append(gripperRotationTransformation);
     gripperRotationTransformation.append(gripper);
 
-    let pickUpTableTransformation = new TransformationSGNode(glm.transform({
-        translate: [-2.6, 0, 0],
-        rotateY: 90,
-        scale: [1, 1, 2]
-    }));
-
-    //create table
+    
+    
+    //create "right" table
     let pickUpTable = new MaterialSGNode([
         new RenderSGNode(resources.table)
     ]);
-    root.append(pickUpTableTransformation);
-    pickUpTableTransformation.append(pickUpTable);
+    //add "right" table to scene graph
+    root.append(new TransformationSGNode(glm.transform({
+        translate: [-2.6, 0, 0],
+        rotateY: 90,
+        scale: [1, 1, 2]
+    }), [pickUpTable]));
 
-    let putDownTableTransformation = new TransformationSGNode(glm.transform({
-        translate: [0, 0, -2.4],
-        scale: [1.5, 1, 2]
-    }));
-
+    
+    
+    //create "left" table 
     let putDownTable = new MaterialSGNode([
         new RenderSGNode(resources.table)
     ]);
-    root.append(putDownTableTransformation);
-    putDownTableTransformation.append(putDownTable);
+    
+    //add "left" table to scene graph
+    root.append(new TransformationSGNode(glm.transform({
+        translate: [0, 0, -2.4],
+        scale: [1.5, 1, 2]
+    }), [putDownTable]));
 
+    
+    
+    //create transform node for rbPi
     rbPiTransformation = new TransformationSGNode(glm.transform({
         translate: [-2.6, 0.94, 0],
         scale: [0.1, 0.1, 0.1]
     }));
 
+    //create rbPi
     rbPi = new MaterialSGNode([
         new RenderSGNode(resources.rb_pi)
     ]);
     root.append(rbPiTransformation);
     rbPiTransformation.append(rbPi);
 
-    let arduinoTransformation = new TransformationSGNode(glm.transform({
-        translate: [-2.6, 0.90, -0.7],
-        scale: [.1, .1, .1]
+    
+    
+    //create circuitBoard
+    let circuitBoard = new MaterialSGNode([
+        new RenderSGNode(resources.circuit_board)
+    ]);
+    
+    //add circuitBoard to scene graph
+    root.append(new TransformationSGNode(glm.transform({
+        translate: [-2.6, 0.96, -0.7],
+        scale: [0.05, 0.05, 0.05]
+    }), [circuitBoard]));
+
+    
+    
+    //create transform node for arduino
+    arduinoTransformation = new TransformationSGNode(glm.transform({
+        translate: [0.74, 0.90, -2.4],
+        scale: [.1, .1, .1],
+        rotateY: 75,
     }));
 
+    //create arduino
     let arduino = new MaterialSGNode([
         new RenderSGNode(resources.arduino)
     ]);
     root.append(arduinoTransformation);
     arduinoTransformation.append(arduino);
 
-    let conveyorTransformation = new TransformationSGNode(glm.transform({
-        translate: [3, 0, 0],
-        scale: [1.31, 1.31, 1.31],
-        rotateY: 90
-    }));
-
+    
+    
+    //create conveyor belt
     let conveyor = new MaterialSGNode([
         new RenderSGNode(resources.conveyor)
     ]);
-    root.append(conveyorTransformation);
-    conveyorTransformation.append(conveyor);
+    
+    //add conveyor belt to scene graph
+    root.append(new TransformationSGNode(glm.transform({
+        translate: [3, 0, 0],
+        scale: [1.31, 1.31, 1.31],
+        rotateY: 90
+    }), [conveyor]));
 
-    let boxTransformation = new TransformationSGNode(glm.transform({
-        translate: [4.8, 0, 0],
-        scale: [0.4, 0.4, 0.4]
-    }));
-
+    
+    
+    //create box
     let box = new MaterialSGNode([
         new RenderSGNode(resources.box)
     ]);
-    root.append(boxTransformation);
-    boxTransformation.append(box);
+    
+    //add box to scene graph
+    root.append(new TransformationSGNode(glm.transform({
+        translate: [4.8, 0, 0],
+        scale: [0.4, 0.4, 0.4]
+    }),[box]));
 
-    //animations
-
-    moveRobotToScene = new Animation(armScaleTransformNode,
-        [{
-            matrix: mat4.multiply(mat4.create(), mat4.multiply(mat4.create(), mat4.create(), glm.transform({
-                translate: [0, 0, 0],
-                rotateY: 180,
-                scale: 0.30
-            })), glm.translate(0, 0, 0)), duration: 3700
-        }
-        ], false);
-    moveRobotToScene.start();
-
-    arm4PutDownAnimation1 = arm4PutDownAnimation();
-    arm4PickUpAnimation1 = arm4PickUpAnimation();
-
-
-    totalArmRotationAnimation1 = new Animation(armScaleTransformNode,
-        [{
-            matrix: progress => mat4.rotateY(mat4.create(), glm.transform({
-                translate: [0, 0, 0],
-                rotateY: 180,
-                scale: 0.30
-            }), glm.deg2rad(progress * -90)), duration: 2500
-        }], false);
-
-    arm4PutDownAnimation2 = arm4PutDownAnimation();
-    arm4PickUpAnimation2 = arm4PickUpAnimation();
-
-    totalArmRotationAnimation2 = new Animation(armScaleTransformNode,
-        [{
-            matrix: progress => mat4.rotateY(mat4.create(), mat4.multiply(mat4.create(), glm.transform({
-                translate: [0, 0, 0],
-                rotateY: 180,
-                scale: 0.30
-            }), glm.rotateY(-90)), glm.deg2rad(progress * -90)), duration: 2500
-        }], false);
-
-    arm4PutDownAnimation3 = arm4PutDownAnimation();
-    arm4PickUpAnimation3 = arm4PickUpAnimation();
     
 
-    moveRobotToScene.start();
-    arm4PutDownAnimation1.start();
-    arm4PickUpAnimation1.start();
-    totalArmRotationAnimation1.start();
-    arm4PutDownAnimation2.start();
-    arm4PickUpAnimation2.start();
-    totalArmRotationAnimation2.start();
-    arm4PutDownAnimation3.start();
-    arm4PickUpAnimation3.start();
+    //create rail
+    let rail = new MaterialSGNode([
+        new RenderSGNode(resources.rail)
+    ]);
+    
+    //add rail to scene graph
+    root.append(new TransformationSGNode(glm.transform({
+        translate: [0, 0.05, 2.64],
+        scale: [3, 1, 1.5],
+        rotateY: 90
+    }), [rail]));
+
+    
+    
+    //animations
+    initAnimations();
 
     return root;
 }
 
-function arm4PutDownAnimation() {
-    return new Animation(arm4RotationTransformation,
-        [{
-            matrix: progress => mat4.rotateZ(mat4.create(), glm.translate(arm4Pos[0], arm4Pos[1], arm4Pos[2]), glm.deg2rad(progress * -15.5)),
-            duration: 1250
-        }],
-        false);
-}
-
-function arm4PickUpAnimation() {
-    return new Animation(arm4RotationTransformation,
-        [{
-                matrix: progress => mat4.rotateZ(mat4.create(), mat4.rotateZ(mat4.create(), glm.translate(arm4Pos[0], arm4Pos[1], arm4Pos[2]), glm.deg2rad(-15.5)), glm.deg2rad(progress * 15.5)),
-                duration: 1250
-            }],
-        false);
-}
-
-let step = 0;
 /**
  * render one frame
  */
@@ -391,85 +367,26 @@ function render(timeInMilliseconds) {
     var deltaTime = timeInMilliseconds - previousTime;
     previousTime = timeInMilliseconds;
 
-    if(step === 0) {
-        moveRobotToScene.update(deltaTime);
-        if(!moveRobotToScene.running) {
-            step++;
-        }
-    }
-    if(step === 1) {
-        arm4PutDownAnimation1.update(deltaTime);
-        if(!arm4PutDownAnimation1.running) {
-            step++;
-        }
-    }
-    if(step === 2) {
-        root.remove(rbPiTransformation);
-        gripperRotationTransformation.append(rbPiTransformation);
-        rbPiTransformation.setMatrix(glm.transform({
-            translate: [0, -1, 0],
-            scale: [0.33, 0.33, 0.33]
-        }));
-        arm4PickUpAnimation1.update(deltaTime);
-        if(!arm4PickUpAnimation1.running) {
-            step++;
-        }
-    }
-    if(step === 3) {
-        totalArmRotationAnimation1.update(deltaTime);
-        if(!totalArmRotationAnimation1.running) {
-            step++;
-        }
-    }
-    if(step === 4) {
-        arm4PutDownAnimation2.update(deltaTime);
-        gripperRotationTransformation.remove(rbPiTransformation);
-        root.append(rbPiTransformation);
-        if(!arm4PutDownAnimation2.running) {
-            rbPiTransformation.setMatrix(glm.transform({
-                translate: [0, 0.94, -2.4],
-                scale: [.1, .1, .1],
-                rotateY: 90,
-            }));
-            step++;
-        }
-    }
-    if(step === 5) {
-        arm4PickUpAnimation2.update(deltaTime);
-        if(!arm4PickUpAnimation2.running) {
-            step++;
-        }
-    }
-    if(step === 6) {
-        totalArmRotationAnimation2.update(deltaTime);
-        if(!totalArmRotationAnimation2.running) {
-            step++;
-        }
-    }
-    if(step === 7) {
-        arm4PutDownAnimation3.update(deltaTime);
-        if(!arm4PutDownAnimation3.running) {
-            step++;
-        }
-    }
-    if(step === 8) {
-        arm4PickUpAnimation3.update(deltaTime);
-        if(!arm4PickUpAnimation3.running) {
-            step++;
-        }
+    //skipping animation as long as page is not yet rendered and therefore frames take longer
+    if (deltaTime > 50) {
+        requestAnimationFrame(render);
+        return;
     }
 
+    //starting 20 second animation
+    startAnimation(deltaTime);
+
+    //disabled for development
     //update animation BEFORE camera
     //cameraAnimation.update(deltaTime);
     camera.update(deltaTime);
     camera.control.enabled = true;
 
+    //disabled for development
     //At the end of the automatic flight, switch to manual control
     //if(!cameraAnimation.running && !camera.control.enabled) {
     //  camera.control.enabled = true;
     //}
-
-    //TODO use your own scene for rendering
 
     //Apply camera
     camera.render(context);
@@ -479,8 +396,5 @@ function render(timeInMilliseconds) {
 
     //request another call as soon as possible
     requestAnimationFrame(render);
-
-
-    animatedAngle = timeInMilliseconds / 10;
 }
 
