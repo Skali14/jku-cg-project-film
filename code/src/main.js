@@ -54,6 +54,9 @@ loadResources({
     box: './src/models/box.obj',
     circuit_board: './src/models/circuit_board.obj',
     rail: './src/models/rail.obj',
+    wall_ceiling: './src/models/wall_ceiling.obj',
+    ceiling_light_casing: './src/models/ceiling_light_casing.obj',
+    ceiling_light_light: './src/models/ceiling_light_light.obj',
 }).then(function (resources /*an object containing our keys with the loaded resources*/) {
     init(resources);
 
@@ -91,19 +94,31 @@ function createSceneGraph(gl, resources) {
     }
 
     // create white light node
-    let light = new LightSGNode();
-    light.ambient = [.5, .5, .5, 1];
-    light.diffuse = [1, 1, 1, 1];
-    light.specular = [1, 1, 1, 1];
-    light.position = [-2.5, 3, -2.5];
-    light.append(createLightSphere(resources));
-    // add light to scenegraph
-    root.append(light);
+    let light1 = createCeilingLightLightNode();
+    light1.uniform = 'u_light1';
+    light1.position = [-3, 5.7, -3];
+    root.append(light1);
+
+    let light2 = createCeilingLightLightNode();
+    light2.uniform = 'u_light2';
+    light2.position = [3, 5.7, -3];
+    root.append(light2);
+
+    let light3 = createCeilingLightLightNode();
+    light3.uniform = 'u_light3';
+    light3.position = [-3, 5.7, 3];
+    root.append(light3);
+
+    let light4 = createCeilingLightLightNode();
+    light4.uniform = 'u_light4';
+    light4.position = [3, 5.7, 3];
+    root.append(light4);
 
     // create floor
     let floor = new MaterialSGNode([
         new RenderSGNode(makeRect(2, 2))
     ]);
+    
     //dark
     floor.ambient = [0.2, 0.2, 0.2, 1];
     floor.diffuse = [0.1, 0.1, 0.1, 1];
@@ -130,14 +145,16 @@ function createSceneGraph(gl, resources) {
     let base = new MaterialSGNode([
         new RenderSGNode(resources.base)
     ]);
+
+    base.ambient = [0.05375, 0.05, 0.06625, 0.82];
+    base.diffuse = [0.18275, 0.17, 0.22525, 0.82];
+    base.specular = [0.332741, 0.328634, 0.346435, 0.82];
+    base.shininess = 38.4;
+    
     totalArmTransformNode.append(new TransformationSGNode(mat4.create(),[base]));
 
-    
-
     //create arm1
-    let arm1 = new MaterialSGNode([
-        new RenderSGNode(resources.arm1)
-    ]);
+    let arm1 = createArm1To3MaterialNode(new RenderSGNode(resources.arm1));
     
     //add arm1 to scene graph
     totalArmTransformNode.append(new TransformationSGNode(glm.translate(arm1Pos[0], arm1Pos[1], arm1Pos[2]), [arm1]));
@@ -145,9 +162,7 @@ function createSceneGraph(gl, resources) {
     
 
     //create arm2
-    let arm2 = new MaterialSGNode([
-        new RenderSGNode(resources.arm2)
-    ]);
+    let arm2 = createArm1To3MaterialNode(new RenderSGNode(resources.arm2));
     
     //add arm2 to scene graph
     totalArmTransformNode.append(new TransformationSGNode(glm.translate(arm2Pos[0], arm2Pos[1], arm2Pos[2]), [arm2]));
@@ -155,9 +170,7 @@ function createSceneGraph(gl, resources) {
     
 
     //create arm3
-    let arm3 = new MaterialSGNode([
-        new RenderSGNode(resources.arm3)
-    ]);
+    let arm3 = createArm1To3MaterialNode(new RenderSGNode(resources.arm3));
     
     //add arm3 to scene graph
     totalArmTransformNode.append(new TransformationSGNode(glm.translate(arm3Pos[0], arm3Pos[1], arm3Pos[2]), [arm3]));
@@ -168,9 +181,7 @@ function createSceneGraph(gl, resources) {
     arm4RotationTransformation = new TransformationSGNode(glm.translate(arm4Pos[0], arm4Pos[1], arm4Pos[2]));
     
     //create arm4
-    let arm4 = new MaterialSGNode([
-        new RenderSGNode(resources.arm4)
-    ]);
+    let arm4 = createArm4To7MaterialNode(new RenderSGNode(resources.arm4));
     
     //add arm4 to scene graph
     totalArmTransformNode.append(arm4RotationTransformation);
@@ -179,9 +190,7 @@ function createSceneGraph(gl, resources) {
     
 
     //create arm5
-    let arm5 = new MaterialSGNode([
-        new RenderSGNode(resources.arm5)
-    ]);
+    let arm5 = createArm4To7MaterialNode(new RenderSGNode(resources.arm5));
 
     //calculate relative position for arm5
     let arm5RelativeToArm4 = vec3.subtract(vec3.create(), arm5Pos, arm4Pos);
@@ -191,9 +200,7 @@ function createSceneGraph(gl, resources) {
     
 
     //create arm6
-    let arm6 = new MaterialSGNode([
-        new RenderSGNode(resources.arm6)
-    ]);
+    let arm6 = createArm4To7MaterialNode(new RenderSGNode(resources.arm6));
 
     //calculate relative position for arm6
     let arm6RelativeToArm5 = vec3.subtract(vec3.create(), arm6Pos, arm5Pos);
@@ -203,9 +210,7 @@ function createSceneGraph(gl, resources) {
     
     
     //create arm7
-    let arm7 = new MaterialSGNode([
-        new RenderSGNode(resources.arm7)
-    ]);
+    let arm7 = new createArm4To7MaterialNode(new RenderSGNode(resources.arm7));
     
     //calculate relative position for arm7
     let arm7RelativeToArm6 = vec3.subtract(vec3.create(), arm7Pos, arm6Pos);
@@ -222,6 +227,12 @@ function createSceneGraph(gl, resources) {
     gripper = new MaterialSGNode([
         new RenderSGNode(resources.gripper)
     ]);
+
+    gripper.ambient = [0.1, 0.18725, 0.1745, 0.8];
+    gripper.diffuse = [0.396, 0.74151, 0.69102, 0.8];
+    gripper.specular = [0.297254, 0.30829, 0.306678, 0.8];
+    gripper.shininess = 12.8;
+    
     arm7.append(gripperRotationTransformation);
     gripperRotationTransformation.append(gripper);
 
@@ -231,6 +242,12 @@ function createSceneGraph(gl, resources) {
     let pickUpTable = new MaterialSGNode([
         new RenderSGNode(resources.table)
     ]);
+
+    pickUpTable.ambient = [0.2125, 0.1275, 0.054, 1.0];
+    pickUpTable.diffuse = [0.714, 0.4284, 0.18144, 1.0];
+    pickUpTable.specular = [0.393548, 0.271906, 0.166721, 1.0];
+    pickUpTable.shininess = 25.6;
+    
     //add "right" table to scene graph
     root.append(new TransformationSGNode(glm.transform({
         translate: [-2.6, 0, 0],
@@ -244,6 +261,11 @@ function createSceneGraph(gl, resources) {
     let putDownTable = new MaterialSGNode([
         new RenderSGNode(resources.table)
     ]);
+
+    putDownTable.ambient = [0.2125, 0.1275, 0.054, 1.0];
+    putDownTable.diffuse = [0.714, 0.4284, 0.18144, 1.0];
+    putDownTable.specular = [0.393548, 0.271906, 0.166721, 1.0];
+    putDownTable.shininess = 25.6;
     
     //add "left" table to scene graph
     root.append(new TransformationSGNode(glm.transform({
@@ -263,6 +285,12 @@ function createSceneGraph(gl, resources) {
     rbPi = new MaterialSGNode([
         new RenderSGNode(resources.rb_pi)
     ]);
+
+    rbPi.ambient = [0.23125, 0.23125, 0.23125, 1.0];
+    rbPi.diffuse = [0.2775, 0.2775, 0.2775, 1.0];
+    rbPi.specular = [0.773911, 0.773911, 0.773911, 1.0];
+    rbPi.shininess = 89.6;
+    
     root.append(rbPiTransformation);
     rbPiTransformation.append(rbPi);
 
@@ -272,6 +300,11 @@ function createSceneGraph(gl, resources) {
     let circuitBoard = new MaterialSGNode([
         new RenderSGNode(resources.circuit_board)
     ]);
+
+    circuitBoard.ambient = [0.23125, 0.23125, 0.23125, 1.0];
+    circuitBoard.diffuse = [0.2775, 0.2775, 0.2775, 1.0];
+    circuitBoard.specular = [0.773911, 0.773911, 0.773911, 1.0];
+    circuitBoard.shininess = 89.6;
     
     //add circuitBoard to scene graph
     root.append(new TransformationSGNode(glm.transform({
@@ -292,6 +325,12 @@ function createSceneGraph(gl, resources) {
     let arduino = new MaterialSGNode([
         new RenderSGNode(resources.arduino)
     ]);
+
+    arduino.ambient = [0.23125, 0.23125, 0.23125, 1.0];
+    arduino.diffuse = [0.2775, 0.2775, 0.2775, 1.0];
+    arduino.specular = [0.773911, 0.773911, 0.773911, 1.0];
+    arduino.shininess = 89.6;
+    
     root.append(arduinoTransformation);
     arduinoTransformation.append(arduino);
 
@@ -301,6 +340,11 @@ function createSceneGraph(gl, resources) {
     let conveyor = new MaterialSGNode([
         new RenderSGNode(resources.conveyor)
     ]);
+
+    conveyor.ambient = [0.05375, 0.05, 0.06625, 0.82];
+    conveyor.diffuse = [0.18275, 0.17, 0.22525, 0.82];
+    conveyor.specular = [0.33274, 0.328634, 0.346435, 0.82];
+    conveyor.shininess = 38.4;
     
     //add conveyor belt to scene graph
     root.append(new TransformationSGNode(glm.transform({
@@ -315,6 +359,11 @@ function createSceneGraph(gl, resources) {
     let box = new MaterialSGNode([
         new RenderSGNode(resources.box)
     ]);
+
+    box.ambient = [0.19125, 0.0735, 0.0225, 1.0];
+    box.diffuse = [0.7038, 0.27048, 0.0828, 1.0];
+    box.specular = [0.256777, 0.137622, 0.086014, 1.0];
+    box.shininess = 2.8;
     
     //add box to scene graph
     root.append(new TransformationSGNode(glm.transform({
@@ -322,12 +371,15 @@ function createSceneGraph(gl, resources) {
         scale: [0.4, 0.4, 0.4]
     }),[box]));
 
-    
-
     //create rail
     let rail = new MaterialSGNode([
         new RenderSGNode(resources.rail)
     ]);
+
+    rail.ambient = [0.2312, 0.2312, 0.2312, 1.0];
+    rail.diffuse = [0.2775, 0.2775, 0.2775, 1.0];
+    rail.specular = [0.773911, 0.773911, 0.773911, 1.0];
+    rail.shininess = 89.6;
     
     //add rail to scene graph
     root.append(new TransformationSGNode(glm.transform({
@@ -335,6 +387,62 @@ function createSceneGraph(gl, resources) {
         scale: [3, 1, 1.5],
         rotateY: 90
     }), [rail]));
+
+    let wall_ceiling = new MaterialSGNode([
+        new RenderSGNode(resources.wall_ceiling)
+    ]);
+
+    wall_ceiling.ambient = [0.25, 0.25, 0.25, 1.0];
+    wall_ceiling.diffuse = [0.4, 0.4, 0.4, 1.0];
+    wall_ceiling.specular = [0.274597, 0.274597, 0.274597, 1.0];
+    wall_ceiling.shininess = 36.8;
+
+    //add rail to scene graph
+    root.append(new TransformationSGNode(glm.transform({
+        translate: [0, 0, 0],
+        scale: [1.5, 0.75, 1.5],
+        rotateY: 90
+    }), [wall_ceiling]));
+
+    let ceiling_light_casing1 = createCeilingLightCasingMaterialNode(new RenderSGNode(resources.ceiling_light_casing));
+    let ceiling_light_light1 = createCeilingLightMaterialNode(new RenderSGNode(resources.ceiling_light_light));
+
+    //add rail to scene graph
+    root.append(new TransformationSGNode(glm.transform({
+        translate: [-3, 5.9, -3],
+        scale: [2, 2, 2],
+        rotateY: 90
+    }), [ceiling_light_casing1, ceiling_light_light1]));
+
+    let ceiling_light_casing2 = createCeilingLightCasingMaterialNode(new RenderSGNode(resources.ceiling_light_casing));
+    let ceiling_light_light2 = createCeilingLightMaterialNode(new RenderSGNode(resources.ceiling_light_light));
+
+    //add rail to scene graph
+    root.append(new TransformationSGNode(glm.transform({
+        translate: [-3, 5.9, 3],
+        scale: [2, 2, 2],
+        rotateY: 90
+    }), [ceiling_light_casing2, ceiling_light_light2]));
+
+    let ceiling_light_casing3 = createCeilingLightCasingMaterialNode(new RenderSGNode(resources.ceiling_light_casing));
+    let ceiling_light_light3 = createCeilingLightMaterialNode(new RenderSGNode(resources.ceiling_light_light));
+
+    //add rail to scene graph
+    root.append(new TransformationSGNode(glm.transform({
+        translate: [3, 5.9, -3],
+        scale: [2, 2, 2],
+        rotateY: 90
+    }), [ceiling_light_casing3, ceiling_light_light3]));
+
+    let ceiling_light_casing4 = createCeilingLightCasingMaterialNode(new RenderSGNode(resources.ceiling_light_casing));
+    let ceiling_light_light4 = createCeilingLightMaterialNode(new RenderSGNode(resources.ceiling_light_light));
+
+    //add rail to scene graph
+    root.append(new TransformationSGNode(glm.transform({
+        translate: [3, 5.9, 3],
+        scale: [2, 2, 2],
+        rotateY: 90
+    }), [ceiling_light_casing4, ceiling_light_light4]));
 
     
     
@@ -396,5 +504,55 @@ function render(timeInMilliseconds) {
 
     //request another call as soon as possible
     requestAnimationFrame(render);
+}
+
+function createArm1To3MaterialNode(renderNode) {
+    let materialNode = new MaterialSGNode([renderNode]);
+    materialNode.ambient = [0.19225, 0.19225, 0.19225, 1];
+    materialNode.diffuse = [0.50754, 0.50754, 0.50754, 1];
+    materialNode.specular = [0.508273, 0.508273, 0.508273, 1];
+    materialNode.shininess = 51.2;
+    
+    return materialNode;
+}
+
+function createArm4To7MaterialNode(renderNode) {
+    let materialNode = new MaterialSGNode([renderNode]);
+    materialNode.ambient = [0.105882, 0.058824, 0.113725, 1];
+    materialNode.diffuse = [0.427451, 0.470588, 0.541176, 1];
+    materialNode.specular = [0.333333, 0.333333, 0.521569, 1];
+    materialNode.shininess = 9.84615;
+
+    return materialNode;
+}
+
+function createCeilingLightCasingMaterialNode(renderNode) {
+    let materialNode = new MaterialSGNode([renderNode]);
+    materialNode.ambient = [0.25, 0.25, 0.25, 1.0];
+    materialNode.diffuse = [0.4, 0.4, 0.4, 1.0];
+    materialNode.specular = [0.274597, 0.274597, 0.274597, 1.0];
+    materialNode.shininess = 36.8;
+
+    return materialNode;
+}
+
+function createCeilingLightMaterialNode(renderNode) {
+    let materialNode = new MaterialSGNode([renderNode]);
+    materialNode.ambient = [0.2, 0.2, 0.2, 1.0];
+    materialNode.diffuse = [1, 1, 1, 1.0];
+    materialNode.specular = [0.8, 0.8, 0.8, 1.0];
+    materialNode.emission = [1, 1, 1, 1];
+    materialNode.shininess = 51.2;
+
+    return materialNode;
+}
+
+function createCeilingLightLightNode() {
+    let lightNode = new LightSGNode();
+    lightNode.ambient = [.125, .125, .125, 1];
+    lightNode.diffuse = [0.25, 0.25, 0.25, 1];
+    lightNode.specular = [0.25, 0.25, 0.25, 1];
+    
+    return lightNode;
 }
 
