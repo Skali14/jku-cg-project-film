@@ -108,3 +108,4 @@ Mention in the comments column of the table where you have implemented the code 
 * "Circuit Board (Free Download)" (https://skfb.ly/onsoK) by Flikd Design is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 * "Simple rubber conveyor" (https://skfb.ly/6RUV9) by scailman is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 * "Simple Rails" (https://skfb.ly/6WOKG) by Equalent is licensed under CC Attribution-NonCommercial-ShareAlike (http://creativecommons.org/licenses/by-nc-sa/4.0/).
+* "Spotlight" (https://skfb.ly/6XnBC) by JavierLinks is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
