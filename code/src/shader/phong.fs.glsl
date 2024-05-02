@@ -99,7 +99,7 @@ vec4 calculateSimpleSpotLight(SpotLight spotlight, Material material, vec3 spotl
 
 		return (c_amb + c_diff + c_spec + c_em) * (1.0 -(1.0 -dotFromDirection) * 1.0/(1.0 - spotlight.cutOff));
 	} else {
-		return vec4(0, 0, 0, material.emission);
+		return vec4(0, 0, 0, 0);
 	}
 }
 
