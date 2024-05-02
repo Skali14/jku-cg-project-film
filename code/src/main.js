@@ -74,7 +74,7 @@ function init(resources) {
     gl = createContext();
 
     //setup camera
-    cameraStartPos = vec3.fromValues(0, 2, -11);
+    cameraStartPos = vec3.fromValues(0, 2.3, -11);
     camera = new UserControlledCamera(gl.canvas, cameraStartPos);
     //set up an animation for the camera, moving it into position
     cameraAnimation = new Animation(camera,
@@ -99,7 +99,7 @@ function createSceneGraph(gl, resources) {
     
     
 
-    // create white light node
+    //create 4 light nodes for the ceiling lights
     let light1 = createCeilingLightLightNode();
     light1.uniform = 'u_light1';
     light1.position = [-3, 5.7, -3];
@@ -120,6 +120,7 @@ function createSceneGraph(gl, resources) {
     light4.position = [3, 5.7, 3];
     root.append(light4);
 
+    //create spotlight node
     let spotLight = new SpotLightNode();
     spotLight.position = [-1.45, 3.2, -4.96];
     spotLight.ambient = [.75, .75, .75, 1];
@@ -395,12 +396,14 @@ function createSceneGraph(gl, resources) {
     rail.shininess = 89.6;
     
 
+    //add rail to scene graph
     root.append(new TransformationSGNode(glm.transform({
         translate: [0, 0.05, 2.64],
         scale: [3, 1, 1.5],
         rotateY: 90
     }), [rail]));
 
+    //create box around scene
     let wall_ceiling = new MaterialSGNode([
         new RenderSGNode(resources.wall_ceiling)
     ]);
@@ -411,57 +414,59 @@ function createSceneGraph(gl, resources) {
     wall_ceiling.shininess = 36.8;
 
 
+    //add box around scene to scene graph
     root.append(new TransformationSGNode(glm.transform({
         translate: [0, 0, 0],
         scale: [1.5, 0.75, 1.5],
         rotateY: 90
     }), [wall_ceiling]));
 
+    //create ceiling_light1
     let ceiling_light_casing1 = createCeilingLightCasingMaterialNode(new RenderSGNode(resources.ceiling_light_casing));
     let ceiling_light_light1 = createCeilingLightMaterialNode(new RenderSGNode(resources.ceiling_light_light));
 
 
+    //add ceiling_light1 to scene graph
     root.append(new TransformationSGNode(glm.transform({
         translate: [-3, 5.9, -3],
         scale: [2, 2, 2],
         rotateY: 90
     }), [ceiling_light_casing1, ceiling_light_light1]));
 
+    //create ceiling_light2
     let ceiling_light_casing2 = createCeilingLightCasingMaterialNode(new RenderSGNode(resources.ceiling_light_casing));
     let ceiling_light_light2 = createCeilingLightMaterialNode(new RenderSGNode(resources.ceiling_light_light));
 
-
+    //add ceiling_light2 to scene graph
     root.append(new TransformationSGNode(glm.transform({
         translate: [-3, 5.9, 3],
         scale: [2, 2, 2],
         rotateY: 90
     }), [ceiling_light_casing2, ceiling_light_light2]));
 
+    //create ceiling_light3
     let ceiling_light_casing3 = createCeilingLightCasingMaterialNode(new RenderSGNode(resources.ceiling_light_casing));
     let ceiling_light_light3 = createCeilingLightMaterialNode(new RenderSGNode(resources.ceiling_light_light));
 
-
+    //add ceiling_light3 to scene graph
     root.append(new TransformationSGNode(glm.transform({
         translate: [3, 5.9, -3],
         scale: [2, 2, 2],
         rotateY: 90
     }), [ceiling_light_casing3, ceiling_light_light3]));
 
+    //create ceiling_light4
     let ceiling_light_casing4 = createCeilingLightCasingMaterialNode(new RenderSGNode(resources.ceiling_light_casing));
     let ceiling_light_light4 = createCeilingLightMaterialNode(new RenderSGNode(resources.ceiling_light_light));
 
-
+    //add ceiling_light4 to scene graph
     root.append(new TransformationSGNode(glm.transform({
         translate: [3, 5.9, 3],
         scale: [2, 2, 2],
         rotateY: 90
     }), [ceiling_light_casing4, ceiling_light_light4]));
 
-
-
-
-
-
+    //create spotlight_stand
     let spotlight_stand = new MaterialSGNode([
         new RenderSGNode(resources.spotlight_stand)
     ]);
@@ -471,18 +476,20 @@ function createSceneGraph(gl, resources) {
     spotlight_stand.specular = [0.773911, 0.773911, 0.773911, 1.0];
     spotlight_stand.shininess = 89.6;
 
+    //define transformNodes for whole spotlight and the upper part (body) of the spotlight
     let spotlightTransformNode = new TransformationSGNode(glm.transform({translate : [-1.5, 0, -5], rotateY: 18}))
     let spotlightBodyTransformNode = new TransformationSGNode(mat4.rotateX(mat4.create(), glm.translate(0, 3.39224, 0.000203), glm.deg2rad( 45)));
     root.append(spotlightTransformNode);
     spotlightTransformNode.append(spotlightBodyTransformNode);
 
-
+    //add spotlight_stand to scene graph
     spotlightTransformNode.append(new TransformationSGNode(glm.transform({
         translate: [0, 0.000215, 0],
         scale: [1, 1, 1],
         rotateY: 0
     }), [spotlight_stand]));
 
+    //create spotlight_light (upper part without lightbulb (front facing white plane))
     let spotlight_light = new MaterialSGNode([
         new RenderSGNode(resources.spotlight_light)
     ]);
@@ -492,13 +499,16 @@ function createSceneGraph(gl, resources) {
     spotlight_light.specular = [0.773911, 0.773911, 0.773911, 1.0];
     spotlight_light.shininess = 89.6;
 
+    //add spotlight_light to scene graph
     spotlightBodyTransformNode.append(spotlight_light);
 
+    //create spotlight_lightbulb
     let spotlight_lightbulb = new MaterialSGNode([
         new RenderSGNode(resources.spotlight_lightbulb)
     ]);
     spotlight_lightbulb.emission = [1, 1, 1, 1];
 
+    //add spotlight_lightbulb to scene graph
     spotlightBodyTransformNode.append(spotlight_lightbulb);
     
 
@@ -563,6 +573,7 @@ function render(timeInMilliseconds) {
     requestAnimationFrame(render);
 }
 
+//defining material for the first 3 parts of the robotic arm
 function createArm1To3MaterialNode(renderNode) {
     let materialNode = new MaterialSGNode([renderNode]);
     materialNode.ambient = [0.19225, 0.19225, 0.19225, 1];
@@ -573,6 +584,7 @@ function createArm1To3MaterialNode(renderNode) {
     return materialNode;
 }
 
+//defining material for the first next 4 parts of the robotic arm
 function createArm4To7MaterialNode(renderNode) {
     let materialNode = new MaterialSGNode([renderNode]);
     materialNode.ambient = [0.105882, 0.058824, 0.113725, 1];
@@ -583,6 +595,7 @@ function createArm4To7MaterialNode(renderNode) {
     return materialNode;
 }
 
+//defining material for the casing of the 4 ceiling lights
 function createCeilingLightCasingMaterialNode(renderNode) {
     let materialNode = new MaterialSGNode([renderNode]);
     materialNode.ambient = [0.25, 0.25, 0.25, 1.0];
@@ -593,6 +606,7 @@ function createCeilingLightCasingMaterialNode(renderNode) {
     return materialNode;
 }
 
+//defining material for the light tubes of the 4 ceiling lights
 function createCeilingLightMaterialNode(renderNode) {
     let materialNode = new MaterialSGNode([renderNode]);
     materialNode.ambient = [0.2, 0.2, 0.2, 1.0];
@@ -604,6 +618,7 @@ function createCeilingLightMaterialNode(renderNode) {
     return materialNode;
 }
 
+//defining ceiling light light node
 function createCeilingLightLightNode() {
     let lightNode = new LightSGNode();
     lightNode.ambient = [.125, .125, .125, 1];
@@ -613,17 +628,19 @@ function createCeilingLightLightNode() {
     return lightNode;
 }
 
+//implementation of a spotlight based on LightSGNode
 class SpotLightNode extends LightSGNode {
     constructor(position, children) {
         super(position, children);
         this.direction = [0, -1, 0];
+        //cutOff angle
         this.cutOff = Math.cos(glm.deg2rad(15));
         this.uniform = 'u_spotlight';
     }
 
     setLightUniforms(context) {
         super.setLightUniforms(context);
-        //prevent spotlight position being affected by viewMatrix
+        //prevent spotlight position being affected by camera position by transforming direction vector with normal matrix of viewMatrix
         gl.uniform3fv(gl.getUniformLocation(context.shader, this.uniform+'.direction'), vec3.transformMat3(vec3.create(), this.direction, mat3.normalFromMat4(mat3.create, context.viewMatrix)));
         gl.uniform1f(gl.getUniformLocation(context.shader, this.uniform+'.cutOff'), this.cutOff);
 

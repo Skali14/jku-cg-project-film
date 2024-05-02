@@ -35,7 +35,6 @@ void main() {
 	v_light2Vec = u_light2Pos - eyePosition.xyz;
 	v_light3Vec = u_light3Pos - eyePosition.xyz;
 	v_light4Vec = u_light4Pos - eyePosition.xyz;
-	//prevent spotlight position being affected by viewMatrix (camera position and rotation)
 	v_spotlightVec = u_spotlightPos - eyePosition.xyz;
 
 	gl_Position = u_projection * eyePosition;

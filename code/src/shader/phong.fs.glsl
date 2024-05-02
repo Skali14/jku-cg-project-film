@@ -84,6 +84,7 @@ vec4 calculateSimpleSpotLight(SpotLight spotlight, Material material, vec3 spotl
 
 	float dotFromDirection = dot(spotlightVec, -normalize(spotlight.direction));
 
+	//only if angle between light source to given point is less than cutOff angle, define spotlight, else return empty vec
 	if(dotFromDirection >= spotlight.cutOff) {
 
 		float diffuse = max(dot(normalVec,spotlightVec),0.0);
