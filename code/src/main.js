@@ -189,8 +189,6 @@ function createSceneGraph(gl, resources) {
     
     //add arm3 to scene graph
     totalArmTransformNode.append(new TransformationSGNode(glm.translate(arm3Pos[0], arm3Pos[1], arm3Pos[2]), [arm3]));
-
-    
     
     //create transform node for arm4
     arm4RotationTransformation = new TransformationSGNode(glm.translate(arm4Pos[0], arm4Pos[1], arm4Pos[2]));
@@ -459,6 +457,11 @@ function createSceneGraph(gl, resources) {
         rotateY: 90
     }), [ceiling_light_casing4, ceiling_light_light4]));
 
+
+
+
+
+
     let spotlight_stand = new MaterialSGNode([
         new RenderSGNode(resources.spotlight_stand)
     ]);
@@ -468,8 +471,8 @@ function createSceneGraph(gl, resources) {
     spotlight_stand.specular = [0.773911, 0.773911, 0.773911, 1.0];
     spotlight_stand.shininess = 89.6;
 
-    let spotlightTransformNode = new TransformationSGNode(glm.transform({translate : [-1.5, 0, -5], rotateY: 30}))
-    let spotlightBodyTransformNode = new TransformationSGNode(mat4.rotateX(mat4.create(), glm.translate(0, 1, -2.35), glm.deg2rad( 45)));
+    let spotlightTransformNode = new TransformationSGNode(glm.transform({translate : [-1.5, 0, -5], rotateY: 18}))
+    let spotlightBodyTransformNode = new TransformationSGNode(mat4.rotateX(mat4.create(), glm.translate(0, 3.39224, 0.000203), glm.deg2rad( 45)));
     root.append(spotlightTransformNode);
     spotlightTransformNode.append(spotlightBodyTransformNode);
 
@@ -489,22 +492,14 @@ function createSceneGraph(gl, resources) {
     spotlight_light.specular = [0.773911, 0.773911, 0.773911, 1.0];
     spotlight_light.shininess = 89.6;
 
-    spotlightBodyTransformNode.append(new TransformationSGNode(glm.transform({
-        translate: [0, 3.39224, 0.000203],
-        scale: [1, 1, 1],
-        rotateY: 0
-    }), [spotlight_light]));
+    spotlightBodyTransformNode.append(spotlight_light);
 
     let spotlight_lightbulb = new MaterialSGNode([
         new RenderSGNode(resources.spotlight_lightbulb)
     ]);
     spotlight_lightbulb.emission = [1, 1, 1, 1];
 
-    spotlightBodyTransformNode.append(new TransformationSGNode(glm.transform({
-        translate: [0, 3.39224, 0.000203],
-        scale: [1, 1, 1],
-        rotateY: 0
-    }), [spotlight_lightbulb]));
+    spotlightBodyTransformNode.append(spotlight_lightbulb);
     
 
     //animations
@@ -628,11 +623,9 @@ class SpotLightNode extends LightSGNode {
 
     setLightUniforms(context) {
         super.setLightUniforms(context);
-        //prevent spotlight position being affected by viewMatrix (camera position and rotation)
-        gl.uniform3f(gl.getUniformLocation(context.shader, this.uniform + 'Pos'), this.position[0], this.position[1], this.position[2]);
-        gl.uniform3fv(gl.getUniformLocation(context.shader, this.uniform+'.direction'), this.direction);
+        //prevent spotlight position being affected by viewMatrix
+        gl.uniform3fv(gl.getUniformLocation(context.shader, this.uniform+'.direction'), vec3.transformMat3(vec3.create(), this.direction, mat3.normalFromMat4(mat3.create, context.viewMatrix)));
         gl.uniform1f(gl.getUniformLocation(context.shader, this.uniform+'.cutOff'), this.cutOff);
-        gl.uniformMatrix4fv(gl.getUniformLocation(context.shader, 'u_invViewMatrix'), false, mat4.invert(mat4.create(), context.viewMatrix));
 
     }
 }
