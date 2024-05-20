@@ -40,6 +40,7 @@ uniform Light u_light2;
 uniform Light u_light3;
 uniform Light u_light4;
 uniform SpotLight u_spotlight;
+uniform SpotLight u_rotatingSpotlight;
 
 
 //varying vectors for light computation
@@ -50,6 +51,7 @@ varying vec3 v_light2Vec;
 varying vec3 v_light3Vec;
 varying vec3 v_light4Vec;
 varying vec3 v_spotlightVec;
+varying vec3 v_rotatingSpotlightVec;
 
 
 vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, vec3 normalVec, vec3 eyeVec) {
@@ -110,6 +112,7 @@ void main() {
 	  + calculateSimplePointLight(u_light2, u_material, v_light2Vec, v_normalVec, v_eyeVec)
 	  + calculateSimplePointLight(u_light3, u_material, v_light3Vec, v_normalVec, v_eyeVec)
 	  + calculateSimplePointLight(u_light4, u_material, v_light4Vec, v_normalVec, v_eyeVec)
-	  + calculateSimpleSpotLight(u_spotlight, u_material, v_spotlightVec, v_normalVec, v_eyeVec);
+	  + calculateSimpleSpotLight(u_spotlight, u_material, v_spotlightVec, v_normalVec, v_eyeVec)
+	  + calculateSimpleSpotLight(u_rotatingSpotlight, u_material, v_rotatingSpotlightVec, v_normalVec, v_eyeVec);
 
 }

@@ -7,7 +7,8 @@ var gl = null,
 var camera = null;
 var cameraPos = vec3.create();
 var cameraCenter = vec3.create();
-var cameraAnimation = null;
+var cameraStartPos = null;
+//var cameraAnimation = null;
 
 // scenegraph root node
 var root = null;
@@ -22,6 +23,7 @@ let arduinoTransformation;
 let rbPiTransformation;
 let gripper;
 let rbPi;
+let rotatingSpotlightTransformationNode;
 
 let arm1Pos = vec3.fromValues(-0.010286, 5.52644, 0);
 let arm2Pos = vec3.fromValues(-3.42716, 5.5264, 0);
@@ -74,13 +76,12 @@ function init(resources) {
     gl = createContext();
 
     //setup camera
-    cameraStartPos = vec3.fromValues(0, 2.3, -11);
+    cameraStartPos = vec3.fromValues(0, 2.3, 11.5);
     camera = new UserControlledCamera(gl.canvas, cameraStartPos);
+    camera.control.lookingDir.x = 180;
+
     //set up an animation for the camera, moving it into position
-    cameraAnimation = new Animation(camera,
-        [{matrix: mat4.translate(mat4.create(), mat4.create(), vec3.fromValues(0, 1, -10)), duration: 5000}],
-        false);
-    cameraAnimation.start();
+    initCameraAnimations();
     
     root = createSceneGraph(gl, resources);
 }
@@ -130,6 +131,19 @@ function createSceneGraph(gl, resources) {
     spotLight.direction = [1.45, -4.4, 4.9];
     root.append(spotLight);
 
+
+
+    rotatingSpotLight = new SpotLightNode();
+    rotatingSpotLight.position = [0, 3.2, -2.6];
+    rotatingSpotLight.ambient = [.75, .75, .75, 1];
+    rotatingSpotLight.diffuse = [1, 1, 1, 1];
+    rotatingSpotLight.specular = [1, 1, 1, 1];
+    rotatingSpotLight.cutOff = Math.cos(glm.deg2rad(15));
+    rotatingSpotLight.direction = [0, -1, 0];
+    rotatingSpotLight.uniform = "u_rotatingSpotlight";
+    rotatingSpotlightTransformationNode = new TransformationSGNode(glm.translate(0, 0, 0), [rotatingSpotLight]);
+    root.append(rotatingSpotlightTransformationNode);
+
     // create floor
     let floor = new MaterialSGNode([
         new RenderSGNode(makeRect(2, 2))
@@ -141,7 +155,7 @@ function createSceneGraph(gl, resources) {
     floor.specular = [0.5, 0.5, 0.5, 1];
     floor.shininess = 3;
     // add floor to scenegraph
-    root.append(new TransformationSGNode(glm.transform({translate: [0, 0, 0], rotateX: -90, scale: 3}), [
+    root.append(new TransformationSGNode(glm.transform({translate: [0, 0, 0], rotateX: -90, scale: 6}), [
         floor
     ]));
 
@@ -417,7 +431,7 @@ function createSceneGraph(gl, resources) {
     //add box around scene to scene graph
     root.append(new TransformationSGNode(glm.transform({
         translate: [0, 0, 0],
-        scale: [1.5, 0.75, 1.5],
+        scale: [3, 1.5, 3],
         rotateY: 90
     }), [wall_ceiling]));
 
@@ -428,7 +442,7 @@ function createSceneGraph(gl, resources) {
 
     //add ceiling_light1 to scene graph
     root.append(new TransformationSGNode(glm.transform({
-        translate: [-3, 5.9, -3],
+        translate: [-5, 11.8, -5],
         scale: [2, 2, 2],
         rotateY: 90
     }), [ceiling_light_casing1, ceiling_light_light1]));
@@ -439,7 +453,7 @@ function createSceneGraph(gl, resources) {
 
     //add ceiling_light2 to scene graph
     root.append(new TransformationSGNode(glm.transform({
-        translate: [-3, 5.9, 3],
+        translate: [-5, 11.8, 5],
         scale: [2, 2, 2],
         rotateY: 90
     }), [ceiling_light_casing2, ceiling_light_light2]));
@@ -450,7 +464,7 @@ function createSceneGraph(gl, resources) {
 
     //add ceiling_light3 to scene graph
     root.append(new TransformationSGNode(glm.transform({
-        translate: [3, 5.9, -3],
+        translate: [5, 11.8, -5],
         scale: [2, 2, 2],
         rotateY: 90
     }), [ceiling_light_casing3, ceiling_light_light3]));
@@ -461,7 +475,7 @@ function createSceneGraph(gl, resources) {
 
     //add ceiling_light4 to scene graph
     root.append(new TransformationSGNode(glm.transform({
-        translate: [3, 5.9, 3],
+        translate: [5, 11.8, 5],
         scale: [2, 2, 2],
         rotateY: 90
     }), [ceiling_light_casing4, ceiling_light_light4]));
@@ -541,27 +555,21 @@ function render(timeInMilliseconds) {
     var deltaTime = timeInMilliseconds - previousTime;
     previousTime = timeInMilliseconds;
 
+
+
     //skipping animation as long as page is not yet rendered and therefore frames take longer
-    if (deltaTime > 50) {
+    if (deltaTime > 200) {
         requestAnimationFrame(render);
         return;
     }
 
-    //starting 20 second animation
-    startAnimation(deltaTime);
-
-    //disabled for development
     //update animation BEFORE camera
     //cameraAnimation.update(deltaTime);
+    startCameraAnimation(deltaTime);
     camera.update(deltaTime);
-    camera.control.enabled = true;
 
-    //disabled for development
-    //At the end of the automatic flight, switch to manual control
-    //if(!cameraAnimation.running && !camera.control.enabled) {
-    //  camera.control.enabled = true;
-    //}
-
+    //starting 20 second animation
+    startAnimation(deltaTime);
 
     //Apply camera
     camera.render(context);

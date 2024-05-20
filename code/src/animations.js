@@ -16,8 +16,14 @@ let armPickUpAnimation4;
 
 let moveConveyorBeltAnimation;
 
+let cameraAnimation1;
+let rotateSpotlightAnimation;
+
+
 //variable to determine which step of the animation is currently running
 var step  = 0;
+
+var cameraStep = 0;
 
 //defining all necessary animations and setting them to "running"
 function initAnimations() {
@@ -122,6 +128,9 @@ function initAnimations() {
             }],
             false);
     }
+
+    rotateSpotlightAnimation = new Animation(rotatingSpotlightTransformationNode,
+        [{matrix: progress => mat4.translate(mat4.create(), glm.rotateY(progress * 360), [0, 0, 0]), duration: 10000}], true);
     
     //setting all necessary animations to "running"
     moveRobotToSceneAnimation.start();
@@ -137,6 +146,7 @@ function initAnimations() {
     armPutDownAnimation4.start();
     armPickUpAnimation4.start();
     moveConveyorBeltAnimation.start();
+    rotateSpotlightAnimation.start();
 
     return root;
 }
@@ -246,6 +256,28 @@ function startAnimation(deltaTime) {
             if(!moveConveyorBeltAnimation.running) {
                 step++;
             }
+            break;
+    }
+}
+
+function initCameraAnimations() {
+    cameraAnimation1 = new Animation(camera,
+        [{matrix: progress => mat4.translate(mat4.create(), mat4.rotateY(mat4.create(), glm.rotateY(-180), glm.deg2rad(progress * -360)), [0, 2.3, -11.5]), duration: 20000}], false);
+
+    cameraAnimation1.start();
+}
+
+function startCameraAnimation(deltaTime) {
+    switch (cameraStep) {
+        case 0:
+            rotateSpotlightAnimation.update(deltaTime);
+            cameraAnimation1.update(deltaTime);
+            if(!cameraAnimation1.running) {
+                cameraStep++;
+            }
+            break;
+        case 1:
+            camera.control.enabled = true;
             break;
     }
 }
