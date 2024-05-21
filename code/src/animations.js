@@ -247,7 +247,6 @@ function startAnimation(deltaTime) {
                     translate: [2.57, 0.94, 0],
                     scale: [.1, .1, .1]
                 }));
-
             }
             break;
         case 11:
