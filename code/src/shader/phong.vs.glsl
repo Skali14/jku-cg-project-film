@@ -4,6 +4,7 @@
  */
 attribute vec3 a_position;
 attribute vec3 a_normal;
+attribute vec2 a_texCoord;
 
 uniform mat4 u_modelView;
 uniform mat3 u_normalMatrix;
@@ -26,6 +27,8 @@ varying vec3 v_light4Vec;
 varying vec3 v_spotlightVec;
 varying vec3 v_rotatingSpotlightVec;
 
+varying vec2 v_texCoord;
+
 void main() {
 	vec4 eyePosition = u_modelView * vec4(a_position,1);
 
@@ -39,6 +42,8 @@ void main() {
 	v_light4Vec = u_light4Pos - eyePosition.xyz;
 	v_spotlightVec = u_spotlightPos - eyePosition.xyz;
 	v_rotatingSpotlightVec = u_rotatingSpotlightPos - eyePosition.xyz;
+
+	v_texCoord = a_texCoord;
 
 	gl_Position = u_projection * eyePosition;
 }

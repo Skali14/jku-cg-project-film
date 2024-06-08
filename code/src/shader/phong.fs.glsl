@@ -42,8 +42,12 @@ uniform Light u_light4;
 uniform SpotLight u_spotlight;
 uniform SpotLight u_rotatingSpotlight;
 
+uniform bool u_enableObjectTexture;
+uniform sampler2D u_tex;
 
 //varying vectors for light computation
+varying vec2 v_texCoord;
+
 varying vec3 v_normalVec;
 varying vec3 v_eyeVec;
 varying vec3 v_light1Vec;
@@ -54,7 +58,7 @@ varying vec3 v_spotlightVec;
 varying vec3 v_rotatingSpotlightVec;
 
 
-vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, vec3 normalVec, vec3 eyeVec) {
+vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, vec3 normalVec, vec3 eyeVec, vec4 textureColor) {
 	// You can find all built-in functions (min, max, clamp, reflect, normalize, etc.) 
 	// and variables (gl_FragCoord, gl_Position) in the OpenGL Shading Language Specification: 
 	// https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.html#built-in-functions
@@ -69,6 +73,11 @@ vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, ve
 	vec3 reflectVec = reflect(-lightVec,normalVec);
 	float spec = pow( max( dot(reflectVec, eyeVec), 0.0) , material.shininess);
 
+	if(u_enableObjectTexture) {
+		material.diffuse = textureColor;
+		material.ambient = textureColor;
+	}
+
 
 	vec4 c_amb  = clamp(light.ambient * material.ambient, 0.0, 1.0);
 	vec4 c_diff = clamp(diffuse * light.diffuse * material.diffuse, 0.0, 1.0);
@@ -78,7 +87,7 @@ vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, ve
 	return c_amb + c_diff + c_spec + c_em;
 }
 
-vec4 calculateSimpleSpotLight(SpotLight spotlight, Material material, vec3 spotlightVec, vec3 normalVec, vec3 eyeVec) {
+vec4 calculateSimpleSpotLight(SpotLight spotlight, Material material, vec3 spotlightVec, vec3 normalVec, vec3 eyeVec, vec4 textureColor) {
 
 	spotlightVec = normalize(spotlightVec);
 	normalVec = normalize(normalVec);
@@ -94,6 +103,11 @@ vec4 calculateSimpleSpotLight(SpotLight spotlight, Material material, vec3 spotl
 		vec3 reflectVec = reflect(-spotlightVec,normalVec);
 		float spec = pow( max( dot(reflectVec, eyeVec), 0.0) , material.shininess);
 
+		if(u_enableObjectTexture) {
+			material.diffuse = textureColor;
+			material.ambient = textureColor;
+		}
+
 		vec4 c_amb  = clamp(spotlight.ambient * material.ambient, 0.0, 1.0);
 		vec4 c_diff = clamp(diffuse * spotlight.diffuse * material.diffuse, 0.0, 1.0);
 		vec4 c_spec = clamp(spec * spotlight.specular * material.specular, 0.0, 1.0);
@@ -106,13 +120,26 @@ vec4 calculateSimpleSpotLight(SpotLight spotlight, Material material, vec3 spotl
 }
 
 void main() {
+	vec4 textureColor = vec4(0,0,0,1);
+	if(u_enableObjectTexture) {
+		//textureColor = texture2D(u_tex,v_texCoord);
+
+		//gl_FragColor =  vec4(0,0,0,1);
+		//TASK 1: simple texturing: replace vec4(0,0,0,1) with texture lookup;
+		//gl_FragColor = texture2D(u_tex,v_texCoord);
+		//return;
+
+		textureColor = texture2D(u_tex,v_texCoord);
+	}
+
+
 
 	gl_FragColor =
-		calculateSimplePointLight(u_light1, u_material, v_light1Vec, v_normalVec, v_eyeVec)
-	  + calculateSimplePointLight(u_light2, u_material, v_light2Vec, v_normalVec, v_eyeVec)
-	  + calculateSimplePointLight(u_light3, u_material, v_light3Vec, v_normalVec, v_eyeVec)
-	  + calculateSimplePointLight(u_light4, u_material, v_light4Vec, v_normalVec, v_eyeVec)
-	  + calculateSimpleSpotLight(u_spotlight, u_material, v_spotlightVec, v_normalVec, v_eyeVec)
-	  + calculateSimpleSpotLight(u_rotatingSpotlight, u_material, v_rotatingSpotlightVec, v_normalVec, v_eyeVec);
+		calculateSimplePointLight(u_light1, u_material, v_light1Vec, v_normalVec, v_eyeVec, textureColor)
+	  + calculateSimplePointLight(u_light2, u_material, v_light2Vec, v_normalVec, v_eyeVec, textureColor)
+	  + calculateSimplePointLight(u_light3, u_material, v_light3Vec, v_normalVec, v_eyeVec, textureColor)
+	  + calculateSimplePointLight(u_light4, u_material, v_light4Vec, v_normalVec, v_eyeVec, textureColor)
+	  + calculateSimpleSpotLight(u_spotlight, u_material, v_spotlightVec, v_normalVec, v_eyeVec, textureColor)
+	  + calculateSimpleSpotLight(u_rotatingSpotlight, u_material, v_rotatingSpotlightVec, v_normalVec, v_eyeVec, textureColor);
 
 }

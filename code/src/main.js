@@ -40,7 +40,7 @@ loadResources({
     fs: './src/shader/phong.fs.glsl',
     vs_single: './src/shader/single.vs.glsl',
     fs_single: './src/shader/single.fs.glsl',
-    base: './src/models/Base.obj',
+    base: './src/models/base.obj',
     arm1: './src/models/Arm1.obj',
     arm2: './src/models/Arm2.obj',
     arm3: './src/models/Arm3.obj',
@@ -62,6 +62,9 @@ loadResources({
     spotlight_stand: './src/models/spotlight_stand.obj',
     spotlight_light: './src/models/spotlight_light.obj',
     spotlight_lightbulb: './src/models/spotlight_lightbulb.obj',
+    steel: './src/models/steel.jpg',
+    white_plastic: './src/models/white_plastic.jpg',
+    red_aluminum: './src/models/red_aluminum.jpg',
 }).then(function (resources /*an object containing our keys with the loaded resources*/) {
     init(resources);
 
@@ -172,9 +175,9 @@ function createSceneGraph(gl, resources) {
     
     
     //create base
-    let base = new MaterialSGNode([
+    let base = new MaterialSGNode(new CustomTextureNode(resources.steel, [
         new RenderSGNode(resources.base)
-    ]);
+    ]));
 
     base.ambient = [0.05375, 0.05, 0.06625, 0.82];
     base.diffuse = [0.18275, 0.17, 0.22525, 0.82];
@@ -184,7 +187,7 @@ function createSceneGraph(gl, resources) {
     totalArmTransformNode.append(new TransformationSGNode(mat4.create(),[base]));
 
     //create arm1
-    let arm1 = createArm1To3MaterialNode(new RenderSGNode(resources.arm1));
+    let arm1 = createArm1To3MaterialNode(new CustomTextureNode(resources.steel, [new RenderSGNode(resources.arm1)]));
     
     //add arm1 to scene graph
     totalArmTransformNode.append(new TransformationSGNode(glm.translate(arm1Pos[0], arm1Pos[1], arm1Pos[2]), [arm1]));
@@ -192,7 +195,7 @@ function createSceneGraph(gl, resources) {
     
 
     //create arm2
-    let arm2 = createArm1To3MaterialNode(new RenderSGNode(resources.arm2));
+    let arm2 = createArm1To3MaterialNode(new CustomTextureNode(resources.steel, [new RenderSGNode(resources.arm2)]));
     
     //add arm2 to scene graph
     totalArmTransformNode.append(new TransformationSGNode(glm.translate(arm2Pos[0], arm2Pos[1], arm2Pos[2]), [arm2]));
@@ -200,7 +203,7 @@ function createSceneGraph(gl, resources) {
     
 
     //create arm3
-    let arm3 = createArm1To3MaterialNode(new RenderSGNode(resources.arm3));
+    let arm3 = createArm1To3MaterialNode(new CustomTextureNode(resources.steel, [new RenderSGNode(resources.arm3)]));
     
     //add arm3 to scene graph
     totalArmTransformNode.append(new TransformationSGNode(glm.translate(arm3Pos[0], arm3Pos[1], arm3Pos[2]), [arm3]));
@@ -209,7 +212,7 @@ function createSceneGraph(gl, resources) {
     arm4RotationTransformation = new TransformationSGNode(glm.translate(arm4Pos[0], arm4Pos[1], arm4Pos[2]));
     
     //create arm4
-    let arm4 = createArm4To7MaterialNode(new RenderSGNode(resources.arm4));
+    let arm4 = createArm4To7MaterialNode(new CustomTextureNode(resources.white_plastic, [new RenderSGNode(resources.arm4)]));
     
     //add arm4 to scene graph
     totalArmTransformNode.append(arm4RotationTransformation);
@@ -218,7 +221,7 @@ function createSceneGraph(gl, resources) {
     
 
     //create arm5
-    let arm5 = createArm4To7MaterialNode(new RenderSGNode(resources.arm5));
+    let arm5 = createArm4To7MaterialNode(new CustomTextureNode(resources.white_plastic, [new RenderSGNode(resources.arm5)]));
 
     //calculate relative position for arm5
     let arm5RelativeToArm4 = vec3.subtract(vec3.create(), arm5Pos, arm4Pos);
@@ -228,7 +231,7 @@ function createSceneGraph(gl, resources) {
     
 
     //create arm6
-    let arm6 = createArm4To7MaterialNode(new RenderSGNode(resources.arm6));
+    let arm6 = createArm4To7MaterialNode(new CustomTextureNode(resources.white_plastic, [new RenderSGNode(resources.arm6)]));
 
     //calculate relative position for arm6
     let arm6RelativeToArm5 = vec3.subtract(vec3.create(), arm6Pos, arm5Pos);
@@ -238,7 +241,7 @@ function createSceneGraph(gl, resources) {
     
     
     //create arm7
-    let arm7 = new createArm4To7MaterialNode(new RenderSGNode(resources.arm7));
+    let arm7 = new createArm4To7MaterialNode(new CustomTextureNode(resources.white_plastic, [new RenderSGNode(resources.arm7)]));
     
     //calculate relative position for arm7
     let arm7RelativeToArm6 = vec3.subtract(vec3.create(), arm7Pos, arm6Pos);
@@ -252,9 +255,9 @@ function createSceneGraph(gl, resources) {
     gripperRotationTransformation = new TransformationSGNode(glm.translate(gripperRelativeToArm7[0], gripperRelativeToArm7[1], gripperRelativeToArm7[2]));
 
     //create gripper
-    gripper = new MaterialSGNode([
+    gripper = new MaterialSGNode(new CustomTextureNode(resources.red_aluminum, [
         new RenderSGNode(resources.gripper)
-    ]);
+    ]));
 
     gripper.ambient = [0.1, 0.18725, 0.1745, 0.8];
     gripper.diffuse = [0.396, 0.74151, 0.69102, 0.8];
@@ -652,6 +655,14 @@ class SpotLightNode extends LightSGNode {
         gl.uniform3fv(gl.getUniformLocation(context.shader, this.uniform+'.direction'), vec3.transformMat3(vec3.create(), this.direction, mat3.normalFromMat4(mat3.create, context.viewMatrix)));
         gl.uniform1f(gl.getUniformLocation(context.shader, this.uniform+'.cutOff'), this.cutOff);
 
+    }
+}
+
+class CustomTextureNode extends AdvancedTextureSGNode {
+    render(context) {
+        gl.uniform1i(gl.getUniformLocation(context.shader, 'u_enableObjectTexture'), true);
+        super.render(context);
+        gl.uniform1i(gl.getUniformLocation(context.shader, 'u_enableObjectTexture'), false);
     }
 }
 
