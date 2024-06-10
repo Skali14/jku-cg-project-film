@@ -38,7 +38,7 @@ varying vec3 v_cameraRayVec;
 void main() {
 	vec4 eyePosition = u_modelView * vec4(a_position,1);
 
-  v_normalVec = u_normalMatrix * a_normal;
+  v_normalVec = u_invView * u_normalMatrix * a_normal;
 
   v_eyeVec = -eyePosition.xyz;
 	//light position as uniform
