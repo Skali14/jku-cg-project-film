@@ -661,8 +661,6 @@ function initCubeMap(resources) {
     gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resources.env_neg_y);
     gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resources.env_pos_z);
     gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resources.env_neg_z);
-    //generate mipmaps (optional)
-    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
     //unbind the texture again
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 }
