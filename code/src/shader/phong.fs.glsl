@@ -44,6 +44,9 @@ uniform SpotLight u_rotatingSpotlight;
 
 uniform bool u_enableObjectTexture;
 uniform sampler2D u_tex;
+uniform bool u_useReflection;
+uniform bool u_applyLights;
+uniform samplerCube u_texCube;
 
 //varying vectors for light computation
 varying vec2 v_texCoord;
@@ -56,6 +59,8 @@ varying vec3 v_light3Vec;
 varying vec3 v_light4Vec;
 varying vec3 v_spotlightVec;
 varying vec3 v_rotatingSpotlightVec;
+varying vec3 v_cameraRayVec;
+
 
 
 vec4 calculateSimplePointLight(Light light, Material material, vec3 lightVec, vec3 normalVec, vec3 eyeVec, vec4 textureColor) {
@@ -121,25 +126,33 @@ vec4 calculateSimpleSpotLight(SpotLight spotlight, Material material, vec3 spotl
 
 void main() {
 	vec4 textureColor = vec4(0,0,0,1);
+
 	if(u_enableObjectTexture) {
-		//textureColor = texture2D(u_tex,v_texCoord);
-
-		//gl_FragColor =  vec4(0,0,0,1);
-		//TASK 1: simple texturing: replace vec4(0,0,0,1) with texture lookup;
-		//gl_FragColor = texture2D(u_tex,v_texCoord);
-		//return;
-
 		textureColor = texture2D(u_tex,v_texCoord);
 	}
 
+	vec3 normalVec = normalize(v_normalVec);
+	vec3 cameraRayVec = normalize(v_cameraRayVec);
 
+	vec3 texCoords;
+	if(u_useReflection) {
+		//compute reflected camera ray (assign to texCoords)
+		texCoords = reflect(cameraRayVec, v_normalVec);
+	} else {
+		texCoords = cameraRayVec;
+	}
 
-	gl_FragColor =
+	if(u_applyLights) {
+		gl_FragColor =
 		calculateSimplePointLight(u_light1, u_material, v_light1Vec, v_normalVec, v_eyeVec, textureColor)
-	  + calculateSimplePointLight(u_light2, u_material, v_light2Vec, v_normalVec, v_eyeVec, textureColor)
-	  + calculateSimplePointLight(u_light3, u_material, v_light3Vec, v_normalVec, v_eyeVec, textureColor)
-	  + calculateSimplePointLight(u_light4, u_material, v_light4Vec, v_normalVec, v_eyeVec, textureColor)
-	  + calculateSimpleSpotLight(u_spotlight, u_material, v_spotlightVec, v_normalVec, v_eyeVec, textureColor)
-	  + calculateSimpleSpotLight(u_rotatingSpotlight, u_material, v_rotatingSpotlightVec, v_normalVec, v_eyeVec, textureColor);
+		+ calculateSimplePointLight(u_light2, u_material, v_light2Vec, v_normalVec, v_eyeVec, textureColor)
+		+ calculateSimplePointLight(u_light3, u_material, v_light3Vec, v_normalVec, v_eyeVec, textureColor)
+		+ calculateSimplePointLight(u_light4, u_material, v_light4Vec, v_normalVec, v_eyeVec, textureColor)
+		+ calculateSimpleSpotLight(u_spotlight, u_material, v_spotlightVec, v_normalVec, v_eyeVec, textureColor)
+		+ calculateSimpleSpotLight(u_rotatingSpotlight, u_material, v_rotatingSpotlightVec, v_normalVec, v_eyeVec, textureColor)
+		+ textureCube(u_texCube, texCoords);
+	} else {
+		gl_FragColor = textureCube(u_texCube, texCoords);
+	}
 
 }

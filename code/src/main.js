@@ -8,6 +8,7 @@ var camera = null;
 var cameraPos = vec3.create();
 var cameraCenter = vec3.create();
 var cameraStartPos = null;
+var envcubetexture;
 //var cameraAnimation = null;
 
 // scenegraph root node
@@ -24,6 +25,8 @@ let rbPiTransformation;
 let gripper;
 let rbPi;
 let rotatingSpotlightTransformationNode;
+
+
 
 let arm1Pos = vec3.fromValues(-0.010286, 5.52644, 0);
 let arm2Pos = vec3.fromValues(-3.42716, 5.5264, 0);
@@ -53,7 +56,7 @@ loadResources({
     rb_pi: './src/models/rb_pi.obj',
     arduino: './src/models/arduino.obj',
     conveyor: './src/models/conveyor.obj',
-    box: './src/models/box.obj',
+    box: './src/models/box1.obj',
     circuit_board: './src/models/circuit_board.obj',
     rail: './src/models/rail.obj',
     wall_ceiling: './src/models/wall_ceiling.obj',
@@ -65,6 +68,12 @@ loadResources({
     steel: './src/models/steel.jpg',
     white_plastic: './src/models/white_plastic.jpg',
     red_aluminum: './src/models/red_aluminum.jpg',
+    env_pos_x: './src/models/skybox/px.png',
+    env_neg_x: './src/models/skybox/nx.png',
+    env_pos_y: './src/models/skybox/py.png',
+    env_neg_y: './src/models/skybox/ny.png',
+    env_pos_z: './src/models/skybox/pz.png',
+    env_neg_z: './src/models/skybox/nz.png',
 }).then(function (resources /*an object containing our keys with the loaded resources*/) {
     init(resources);
 
@@ -77,6 +86,8 @@ loadResources({
 function init(resources) {
     //create a GL context
     gl = createContext();
+
+    initCubeMap(resources);
 
     //setup camera
     cameraStartPos = vec3.fromValues(0, 2.3, 11.5);
@@ -94,14 +105,10 @@ function createSceneGraph(gl, resources) {
     //create scenegraph
     const root = new ShaderSGNode(createProgram(gl, resources.vs, resources.fs))
 
-    // create node with different shaders
-    function createLightSphere() {
-        return new ShaderSGNode(createProgram(gl, resources.vs_single, resources.fs_single), [
-            new RenderSGNode(makeSphere(.2, 10, 10))
-        ]);
-    }
-    
-    
+    //create skybox
+    let skybox = new EnvironmentSGNode(envcubetexture, 4, false,
+        new RenderSGNode(makeSphere(50)));
+    root.append(skybox);
 
     //create 4 light nodes for the ceiling lights
     let light1 = createCeilingLightLightNode();
@@ -134,8 +141,6 @@ function createSceneGraph(gl, resources) {
     spotLight.direction = [1.45, -4.4, 4.9];
     root.append(spotLight);
 
-
-
     rotatingSpotLight = new SpotLightNode();
     rotatingSpotLight.position = [0, 3.2, -2.6];
     rotatingSpotLight.ambient = [.75, .75, .75, 1];
@@ -161,8 +166,6 @@ function createSceneGraph(gl, resources) {
     root.append(new TransformationSGNode(glm.transform({translate: [0, 0, 0], rotateX: -90, scale: 6}), [
         floor
     ]));
-
-    
     
     //whole robotic arm transformation node
     totalArmTransformNode = new TransformationSGNode(glm.transform({
@@ -172,8 +175,6 @@ function createSceneGraph(gl, resources) {
     }));
     root.append(totalArmTransformNode);
 
-    
-    
     //create base
     let base = new MaterialSGNode(new CustomTextureNode(resources.steel, [
         new RenderSGNode(resources.base)
@@ -367,15 +368,10 @@ function createSceneGraph(gl, resources) {
 
     
     
-    //create conveyor belt
-    let conveyor = new MaterialSGNode([
+    //create conveyor belt / cubemapped
+    let conveyor = new EnvironmentSGNode(envcubetexture, 4, true, [
         new RenderSGNode(resources.conveyor)
     ]);
-
-    conveyor.ambient = [0.05375, 0.05, 0.06625, 0.82];
-    conveyor.diffuse = [0.18275, 0.17, 0.22525, 0.82];
-    conveyor.specular = [0.33274, 0.328634, 0.346435, 0.82];
-    conveyor.shininess = 38.4;
     
     //add conveyor belt to scene graph
     root.append(new TransformationSGNode(glm.transform({
@@ -384,7 +380,6 @@ function createSceneGraph(gl, resources) {
         rotateY: 90
     }), [conveyor]));
 
-    
     
     //create box
     let box = new MaterialSGNode([
@@ -419,24 +414,6 @@ function createSceneGraph(gl, resources) {
         scale: [3, 1, 1.5],
         rotateY: 90
     }), [rail]));
-
-    //create box around scene
-    let wall_ceiling = new MaterialSGNode([
-        new RenderSGNode(resources.wall_ceiling)
-    ]);
-
-    wall_ceiling.ambient = [0.25, 0.25, 0.25, 1.0];
-    wall_ceiling.diffuse = [0.4, 0.4, 0.4, 1.0];
-    wall_ceiling.specular = [0.274597, 0.274597, 0.274597, 1.0];
-    wall_ceiling.shininess = 36.8;
-
-
-    //add box around scene to scene graph
-    root.append(new TransformationSGNode(glm.transform({
-        translate: [0, 0, 0],
-        scale: [3, 1.5, 3],
-        rotateY: 90
-    }), [wall_ceiling]));
 
     //create ceiling_light1
     let ceiling_light_casing1 = createCeilingLightCasingMaterialNode(new RenderSGNode(resources.ceiling_light_casing));
@@ -527,7 +504,6 @@ function createSceneGraph(gl, resources) {
 
     //add spotlight_lightbulb to scene graph
     spotlightBodyTransformNode.append(spotlight_lightbulb);
-    
 
     //animations
     initAnimations();
@@ -554,11 +530,8 @@ function render(timeInMilliseconds) {
     context.projectionMatrix = mat4.perspective(mat4.create(), glm.deg2rad(30), gl.drawingBufferWidth / gl.drawingBufferHeight, 0.01, 100);
     context.viewMatrix = mat4.lookAt(mat4.create(), [0, 1, -10], [0, 0, 0], [0, 1, 0]);
 
-
     var deltaTime = timeInMilliseconds - previousTime;
     previousTime = timeInMilliseconds;
-
-
 
     //skipping animation as long as page is not yet rendered and therefore frames take longer
     if (deltaTime > 200) {
@@ -567,7 +540,6 @@ function render(timeInMilliseconds) {
     }
 
     //update animation BEFORE camera
-    //cameraAnimation.update(deltaTime);
     startCameraAnimation(deltaTime);
     camera.update(deltaTime);
 
@@ -576,6 +548,8 @@ function render(timeInMilliseconds) {
 
     //Apply camera
     camera.render(context);
+
+    context.invViewMatrix = mat4.invert(mat4.create(), context.viewMatrix);
 
     //Render scene
     root.render(context);
@@ -666,5 +640,67 @@ class CustomTextureNode extends AdvancedTextureSGNode {
     }
 }
 
+function initCubeMap(resources) {
+    //create the texture
+    envcubetexture = gl.createTexture();
+    //define some texture unit we want to work on
+    gl.activeTexture(gl.TEXTURE0);
+    //bind the texture to the texture unit
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, envcubetexture);
+    //set sampling parameters
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
+    //gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.MIRRORED_REPEAT); //will be available in WebGL 2
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    //set correct image for each side of the cube map
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);//flipping required for our skybox, otherwise images don't fit together
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resources.env_pos_x);
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resources.env_neg_x);
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resources.env_pos_y);
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resources.env_neg_y);
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resources.env_pos_z);
+    gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, resources.env_neg_z);
+    //generate mipmaps (optional)
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    //unbind the texture again
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+}
+
+class EnvironmentSGNode extends SGNode {
+
+    constructor(envtexture, textureunit, doReflect, children ) {
+        super(children);
+        this.envtexture = envtexture;
+        this.textureunit = textureunit;
+        this.doReflect = doReflect;
+    }
+
+    render(context)
+    {
+        //set additional shader parameters
+        let invView3x3 = mat3.fromMat4(mat3.create(), context.invViewMatrix); //reduce to 3x3 matrix since we only process direction vectors (ignore translation)
+        gl.uniformMatrix3fv(gl.getUniformLocation(context.shader, 'u_invView'), false, invView3x3);
+        gl.uniform1i(gl.getUniformLocation(context.shader, 'u_texCube'), this.textureunit);
+        gl.uniform1i(gl.getUniformLocation(context.shader, 'u_useReflection'), this.doReflect);
+
+        //activate and bind texture
+        gl.activeTexture(gl.TEXTURE0 + this.textureunit);
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.envtexture);
+
+        //disable lighting for the skybox, s.t. it is not overexposed
+        gl.uniform1i(gl.getUniformLocation(context.shader, 'u_applyLights'), 0);
+
+        //render children
+        super.render(context);
+
+        //clean up
+        //enable lighting again for the rest of the objects
+        gl.uniform1i(gl.getUniformLocation(context.shader, 'u_applyLights'), 1);
+
+        gl.activeTexture(gl.TEXTURE0 + this.textureunit);
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+    }
+}
 
 
